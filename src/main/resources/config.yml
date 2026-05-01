@@ -1,1 +1,27 @@
-feature-enabled: true
+# ExtendedChat Configuration
+
+chat-format: "<white><player_name><dark_gray>» <white><message>"
+
+staff-chat-format: "<red>[STAFF] <player_name> <dark_gray>» <white><message>"
+staff-chat-enabled: true
+staff-chat-permission: "extendedchat.staff"
+
+private-msg-sent-format: "<gray>You → <gold><target_name> <white><message>"
+private-msg-received-format: "<gold><sender_name> <gray>→ You <white><message>"
+
+anti-spam-enabled: true
+anti-spam-cooldown: 1.0
+
+anti-link-enabled: true
+anti-link-regex-list:
+  - "(https?://|www\\.)[\\w\\-._~:/?#\\[\\]@!$&'()*+,;=%]+"
+  - "(?i)(discord\\.gg|minecraft\\.server\\.me)"
+anti-link-whitelist:
+  - "hypixel.net"
+  - "cubecraft.net"
+  - "mc-market.org"
+
+color-enabled: true
+color-gradients-enabled: true
+default-name-color: "<white>"
+default-message-color: "<white>"

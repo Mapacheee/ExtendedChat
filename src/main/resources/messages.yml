@@ -1,1 +1,56 @@
-welcome: "<green>Welcome to the server!"
+prefix: "<dark_gray>[<gold>ExtendedChat<dark_gray>] <gray>"
+reloaded: "<green>Configuration reloaded."
+
+staff-chat-no-permission: "<red>You don't have permission to use staff chat."
+staff-chat-enabled: "<green>Staff chat enabled."
+staff-chat-disabled: "<red>Staff chat disabled."
+
+color-no-permission: "<red>You don't have permission to use colors."
+color-no-permission-hex: "<red>You don't have permission to use hex colors."
+color-no-permission-gradient: "<red>You don't have permission to use gradient colors."
+color-prompt-hex: "<green>Enter hex code (without #) or 'cancel' to cancel."
+color-prompt-gradient: "<green>Enter colors separated by comma (e.g., red,blue) or 'cancel' to cancel."
+color-invalid-hex: "<red>Invalid hex color."
+color-invalid-gradient: "<red>Invalid gradient colors."
+color-updated: "<green>Color updated."
+color-removed: "<green>Color removed."
+color-cancelled: "<red>Input cancelled."
+
+gui-color-menu-title: "<#F2AE2E>✦ Custom Color"
+gui-color-picker-name-title: "✦ Name Color"
+gui-color-picker-message-title: "✦ Message Color"
+
+gui-items-name-color: "<#5BF0FF>Name Color"
+gui-items-name-color-lore:
+  - "<gray>Change the color of your"
+  - "<gray>name in chat."
+  - ""
+  - "<yellow>Click to edit"
+gui-items-message-color: "<#29C54D>Message Color"
+gui-items-message-color-lore:
+  - "<gray>Change the color of your"
+  - "<gray>messages."
+  - ""
+  - "<yellow>Click to edit"
+gui-items-custom-color: "<gradient:#F2AE2E:#F27B35>Custom"
+gui-items-custom-color-lore:
+  - "<gray>Left click for HEX"
+  - "<gray>Right click for Gradient"
+gui-items-back: "<gray>← Back"
+gui-items-back-lore:
+  - "<gray>Go back to main menu"
+gui-items-remove: "<red>Remove"
+gui-items-remove-lore:
+  - "<gray>Remove current color"
+
+msg-player-not-found: "<red>Player not found."
+msg-self-message: "<red>You cannot message yourself."
+msg-no-reply: "<red>No one to reply to."
+
+anti-spam-message: "<dark_gray>[<red>Anti-Spam<dark_gray>] <red>Wait a bit before sending another message."
+anti-link-message: "<dark_gray>[<red>Anti-Link<dark_gray>] <red>Links are not allowed."
+
+title-hex-input: "<#F2AE2E>HEX"
+title-hex-input-subtitle: "<gray>Type in chat or 'cancel'"
+title-gradient-input: "<gradient:#F2AE2E:#F27B35>Gradient"
+title-gradient-input-subtitle: "<gray>Type in chat or 'cancel'"
