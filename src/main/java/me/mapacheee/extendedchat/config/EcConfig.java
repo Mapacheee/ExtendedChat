@@ -9,6 +9,9 @@ import java.util.List;
 @ConfigSerializable
 @Configurate("config")
 public record EcConfig(
+        @Setting("command-tab-enabled") boolean commandTabEnabled,
+        @Setting("command-tab-mode") String commandTabMode,
+        @Setting("command-tab-list") List<String> commandTabList,
         @Setting("chat-format-enabled") boolean chatFormatEnabled,
         @Setting("chat-format") String chatFormat,
         @Setting("staff-chat-format") String staffChatFormat,
@@ -30,6 +33,9 @@ public record EcConfig(
 ) {
     public static EcConfig defaults() {
         return new EcConfig(
+                true,
+                "blacklist",
+                List.of("plugins", "pl", "bukkit:plugins", "bukkit:pl"),
                 true,
                 "<dark_gray>[<gray>ExtendedChat<dark_gray>] <white><player_name><dark_gray>» <white><message>",
                 "<red>[STAFF] <player_name> <dark_gray>» <white><message>",

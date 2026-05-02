@@ -1,5 +1,13 @@
 # ExtendedChat Configuration
 
+command-tab-enabled: true
+command-tab-mode: "blacklist" # blacklist or whitelist
+command-tab-list:
+  - "plugins"
+  - "pl"
+  - "bukkit:plugins"
+  - "bukkit:pl"
+
 chat-format-enabled: true
 chat-format: "<white><player_name><dark_gray>» <white><message>"
 
