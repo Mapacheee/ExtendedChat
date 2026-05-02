@@ -88,6 +88,12 @@ public final class ColorListener implements Listener {
                         ? ColorService.InputType.HEX
                         : ColorService.InputType.GRADIENT;
 
+                if (inputType == ColorService.InputType.GRADIENT && !config.get().colorGradientsEnabled()) {
+                    player.sendMessage(MiniMessage.miniMessage().deserialize(
+                            msgs.prefix() + msgs.colorNoPermissionGradient()));
+                    return;
+                }
+
                 String permission = inputType == ColorService.InputType.HEX
                         ? "extendedchat.color.hex" : "extendedchat.color.gradients";
                 if (!player.hasPermission(permission)) {
@@ -154,6 +160,13 @@ public final class ColorListener implements Listener {
             event.setCancelled(true);
             ColorService.ColorInputSession session = colorService.getPendingInput(uuid);
             String input = PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
+
+            if (session.inputType() == ColorService.InputType.GRADIENT && !config.get().colorGradientsEnabled()) {
+                colorService.removePendingInput(uuid);
+                player.sendMessage(MiniMessage.miniMessage().deserialize(
+                        msgs.prefix() + msgs.colorNoPermissionGradient()));
+                return;
+            }
 
             if (input.equalsIgnoreCase("cancelar") || input.equalsIgnoreCase("cancel")) {
                 colorService.removePendingInput(uuid);

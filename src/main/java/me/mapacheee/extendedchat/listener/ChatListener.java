@@ -35,8 +35,9 @@ public final class ChatListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onChat(AsyncChatEvent event) {
         Player player = event.getPlayer();
-
-        if (staffChatService.isToggled(player.getUniqueId())) {
+        if (!staffChatService.isEnabled()) {
+            staffChatService.removeToggle(player.getUniqueId());
+        } else if (staffChatService.isToggled(player.getUniqueId())) {
             Component messageComponent = event.message();
             String message = PlainTextComponentSerializer.plainText().serialize(messageComponent);
             if (!message.isBlank()) {

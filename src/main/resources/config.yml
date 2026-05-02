@@ -1,14 +1,17 @@
 # ExtendedChat Configuration
 
+chat-format-enabled: true
 chat-format: "<white><player_name><dark_gray>» <white><message>"
 
 staff-chat-format: "<red>[STAFF] <player_name> <dark_gray>» <white><message>"
 staff-chat-enabled: true
 staff-chat-permission: "extendedchat.staff"
 
+private-messages-enabled: true
 private-msg-sent-format: "<gray>You → <gold><target_name> <white><message>"
 private-msg-received-format: "<gold><sender_name> <gray>→ You <white><message>"
 
+filters-enabled: true
 anti-spam-enabled: true
 anti-spam-cooldown: 1.0
 

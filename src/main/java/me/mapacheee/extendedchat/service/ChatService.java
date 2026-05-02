@@ -59,7 +59,10 @@ public final class ChatService {
             }
 
             EcConfig cfg = config.get();
-            String format = (cfg != null && cfg.chatFormat() != null) ? cfg.chatFormat() : DEFAULT_FORMAT;
+            if (!cfg.chatFormatEnabled()) {
+                return null;
+            }
+            String format = cfg.chatFormat() != null ? cfg.chatFormat() : DEFAULT_FORMAT;
 
             if (papiEnabled && placeholderHook != null) {
                 try {

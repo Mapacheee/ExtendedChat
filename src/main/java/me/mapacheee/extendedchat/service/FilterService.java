@@ -36,6 +36,9 @@ public final class FilterService {
 
     public boolean canSendMessage(Player player, String message) {
         EcConfig cfg = config.get();
+        if (!cfg.filtersEnabled()) {
+            return true;
+        }
         if (!cfg.antiSpamEnabled() && !cfg.antiLinkEnabled()) {
             return true;
         }

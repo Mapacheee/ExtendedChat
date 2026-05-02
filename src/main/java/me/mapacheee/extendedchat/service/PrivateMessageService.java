@@ -51,6 +51,9 @@ public final class PrivateMessageService {
     }
 
     public void sendPrivateMessage(Player sender, String targetName, String message) {
+        if (!config.get().privateMessagesEnabled()) {
+            return;
+        }
         if (!filterService.canSendMessage(sender, message)) {
             return;
         }
@@ -82,6 +85,9 @@ public final class PrivateMessageService {
     }
 
     public void sendReply(Player sender, String message) {
+        if (!config.get().privateMessagesEnabled()) {
+            return;
+        }
         UUID lastUuid = lastMessagedBy.get(sender.getUniqueId());
         if (lastUuid == null) {
             sender.sendMessage(MiniMessage.miniMessage().deserialize(
