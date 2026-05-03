@@ -1,32 +1,42 @@
 # ExtendedChat Configuration
 
+# Filters what the player sees when using / + TAB.
+# Note: Paper already filters by permissions; this only hides/allows extra commands.
+# If you are OP you will see almost everything, except what you block here.
 command-tab-enabled: true
-command-tab-mode: "blacklist" # blacklist or whitelist
+command-tab-mode: "blacklist" # blacklist = hide listed, whitelist = only show listed
 command-tab-list:
   - "plugins"
   - "pl"
   - "bukkit:plugins"
   - "bukkit:pl"
 
+# Base chat format (fallback).
 chat-format-enabled: true
 chat-format: "<white><player_name><dark_gray>» <white><message>"
+
+# Permission-based formats (the highest weight wins).
+# If false, this list is ignored and chat-format is used.
 chat-formats-enabled: false
 chat-formats:
-  - permission: "extendedchat.format.vip"
-    weight: 100
+  - permission: "extendedchat.format.vip" # required permission (if empty, applies to everyone)
+    weight: 100 # higher weight = higher priority
     format: "<gold>[VIP] <player_name><dark_gray>» <white><message>"
   - permission: "extendedchat.format.member"
     weight: 10
     format: "<white><player_name><dark_gray>» <white><message>"
 
+# Separate staff chat.
 staff-chat-enabled: true
 staff-chat-format: "<red>[STAFF] <player_name> <dark_gray>» <white><message>"
 staff-chat-permission: "extendedchat.staff"
 
+# Private messages (/msg, /tell, /w, /reply).
 private-messages-enabled: true
 private-msg-sent-format: "<gray>You → <gold><target_name> <white><message>"
 private-msg-received-format: "<gold><sender_name> <gray>→ You <white><message>"
 
+# Chat filters (anti-spam and anti-link).
 filters-enabled: true
 anti-spam-enabled: true
 anti-spam-cooldown: 1.0
@@ -40,6 +50,7 @@ anti-link-whitelist:
   - "cubecraft.net"
   - "mc-market.org"
 
+# Chat colors and gradients.
 color-enabled: true
 color-gradients-enabled: true
 default-name-color: "<white>"
