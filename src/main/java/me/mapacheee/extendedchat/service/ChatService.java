@@ -79,6 +79,9 @@ public final class ChatService {
 
             ColorData colorData = colorService.getColorData(player);
 
+            String nameColorTag = safeColorTag(colorData.getNameColor());
+            String messageColorTag = safeColorTag(colorData.getMessageColor());
+
             Component nameComponent = MiniMessage.miniMessage().deserialize(
                     colorData.applyNameColor(player.getName()));
             Component messageColored = MiniMessage.miniMessage().deserialize(
@@ -87,6 +90,8 @@ public final class ChatService {
             TagResolver resolver = TagResolver.builder()
                     .resolver(Placeholder.component("player_name", nameComponent))
                     .resolver(Placeholder.component("message", messageColored))
+                    .resolver(Placeholder.parsed("name_color", nameColorTag))
+                    .resolver(Placeholder.parsed("message_color", messageColorTag))
                     .build();
 
             logger.debug("Building component from format: {}", format);
@@ -147,6 +152,13 @@ public final class ChatService {
             return DEFAULT_FORMAT;
         }
         return fallback;
+    }
+
+    private String safeColorTag(String tag) {
+        if (tag == null || tag.isBlank()) {
+            return "<white>";
+        }
+        return tag;
     }
 
     public void broadcastChat(Component formatted) {
