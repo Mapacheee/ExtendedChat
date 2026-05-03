@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.thewinterframework.configurate.Container;
 import com.thewinterframework.paper.listener.ListenerComponent;
 import io.papermc.paper.event.player.AsyncChatEvent;
+import me.mapacheee.extendedchat.ExtendedChatPlugin;
 import me.mapacheee.extendedchat.color.gui.ColorMenuGUI;
 import me.mapacheee.extendedchat.color.gui.ColorPickerGUI;
 import me.mapacheee.extendedchat.config.EcConfig;
@@ -154,65 +155,76 @@ public final class ColorListener implements Listener {
 
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
-        EcMessages msgs = messages.get();
 
         if (colorService.hasPendingInput(uuid)) {
             event.setCancelled(true);
             ColorService.ColorInputSession session = colorService.getPendingInput(uuid);
             String input = PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
 
-            if (session.inputType() == ColorService.InputType.GRADIENT && !config.get().colorGradientsEnabled()) {
-                colorService.removePendingInput(uuid);
-                player.sendMessage(MiniMessage.miniMessage().deserialize(
-                        msgs.prefix() + msgs.colorNoPermissionGradient()));
+            ExtendedChatPlugin plugin = ExtendedChatPlugin.getInstance();
+            if (plugin == null) {
                 return;
             }
 
-            if (input.equalsIgnoreCase("cancelar") || input.equalsIgnoreCase("cancel")) {
-                colorService.removePendingInput(uuid);
-                player.sendMessage(MiniMessage.miniMessage().deserialize(
-                        msgs.prefix() + msgs.colorCancelled()));
-                return;
-            }
+            player.getScheduler().run(plugin, task -> handleColorInput(player, session, input), null);
+        }
+    }
 
-            String colorTag;
-            if (session.inputType() == ColorService.InputType.HEX) {
-                if (input.startsWith("#")) {
-                    input = input.substring(1);
-                }
-                if (!ColorData.isValidHexColor(input)) {
-                    player.sendMessage(MiniMessage.miniMessage().deserialize(
-                            msgs.prefix() + msgs.colorInvalidHex()));
-                    return;
-                }
-                colorTag = ColorData.formatHexColor(input);
-            } else {
-                String[] parts = input.split(",| ");
-                if (parts.length < 2) {
-                    player.sendMessage(MiniMessage.miniMessage().deserialize(
-                            msgs.prefix() + msgs.colorInvalidGradient()));
-                    return;
-                }
-                String c1 = parts[0].startsWith("#") ? parts[0].substring(1) : parts[0];
-                String c2 = parts[1].startsWith("#") ? parts[1].substring(1) : parts[1];
-                if (!ColorData.isValidHexColor(c1) || !ColorData.isValidHexColor(c2)) {
-                    player.sendMessage(MiniMessage.miniMessage().deserialize(
-                            msgs.prefix() + msgs.colorInvalidGradient()));
-                    return;
-                }
-                colorTag = "<gradient:#" + c1 + ":#" + c2 + ">";
-            }
+    private void handleColorInput(Player player, ColorService.ColorInputSession session, String input) {
+        EcMessages msgs = messages.get();
+        UUID uuid = player.getUniqueId();
 
-            if (session.target() == ColorService.ColorTarget.NAME) {
-                colorService.setNameColor(player, colorTag);
-            } else {
-                colorService.setMessageColor(player, colorTag);
-            }
-
+        if (session.inputType() == ColorService.InputType.GRADIENT && !config.get().colorGradientsEnabled()) {
             colorService.removePendingInput(uuid);
             player.sendMessage(MiniMessage.miniMessage().deserialize(
-                    msgs.prefix() + msgs.colorUpdated()));
+                    msgs.prefix() + msgs.colorNoPermissionGradient()));
+            return;
         }
+
+        if (input.equalsIgnoreCase("cancelar") || input.equalsIgnoreCase("cancel")) {
+            colorService.removePendingInput(uuid);
+            player.sendMessage(MiniMessage.miniMessage().deserialize(
+                    msgs.prefix() + msgs.colorCancelled()));
+            return;
+        }
+
+        String colorTag;
+        if (session.inputType() == ColorService.InputType.HEX) {
+            if (input.startsWith("#")) {
+                input = input.substring(1);
+            }
+            if (!ColorData.isValidHexColor(input)) {
+                player.sendMessage(MiniMessage.miniMessage().deserialize(
+                        msgs.prefix() + msgs.colorInvalidHex()));
+                return;
+            }
+            colorTag = ColorData.formatHexColor(input);
+        } else {
+            String[] parts = input.split(",| ");
+            if (parts.length < 2) {
+                player.sendMessage(MiniMessage.miniMessage().deserialize(
+                        msgs.prefix() + msgs.colorInvalidGradient()));
+                return;
+            }
+            String c1 = parts[0].startsWith("#") ? parts[0].substring(1) : parts[0];
+            String c2 = parts[1].startsWith("#") ? parts[1].substring(1) : parts[1];
+            if (!ColorData.isValidHexColor(c1) || !ColorData.isValidHexColor(c2)) {
+                player.sendMessage(MiniMessage.miniMessage().deserialize(
+                        msgs.prefix() + msgs.colorInvalidGradient()));
+                return;
+            }
+            colorTag = "<gradient:#" + c1 + ":#" + c2 + ">";
+        }
+
+        if (session.target() == ColorService.ColorTarget.NAME) {
+            colorService.setNameColor(player, colorTag);
+        } else {
+            colorService.setMessageColor(player, colorTag);
+        }
+
+        colorService.removePendingInput(uuid);
+        player.sendMessage(MiniMessage.miniMessage().deserialize(
+                msgs.prefix() + msgs.colorUpdated()));
     }
 
     private String getColorFromSlot(int slot) {

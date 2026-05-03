@@ -3,6 +3,7 @@ package me.mapacheee.extendedchat.service;
 import com.google.inject.Inject;
 import com.thewinterframework.configurate.Container;
 import com.thewinterframework.service.annotation.Service;
+import me.mapacheee.extendedchat.ExtendedChatPlugin;
 import me.mapacheee.extendedchat.config.EcConfig;
 import me.mapacheee.extendedchat.config.EcMessages;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -49,7 +50,7 @@ public final class FilterService {
             long cooldownMs = (long) (cfg.antiSpamCooldown() * 1000);
 
             if (now - lastMessage < cooldownMs) {
-                player.sendMessage(MiniMessage.miniMessage().deserialize(
+                sendPlayerMessage(player, MiniMessage.miniMessage().deserialize(
                         messages.get().prefix() + messages.get().antispamMessage()));
                 return false;
             }
@@ -58,13 +59,22 @@ public final class FilterService {
 
         if (cfg.antiLinkEnabled() && !player.hasPermission("extendedchat.antilink.bypass")) {
             if (containsBlockedLink(message)) {
-                player.sendMessage(MiniMessage.miniMessage().deserialize(
+                sendPlayerMessage(player, MiniMessage.miniMessage().deserialize(
                         messages.get().prefix() + messages.get().antiLinkMessage()));
                 return false;
             }
         }
 
         return true;
+    }
+
+    private void sendPlayerMessage(Player player, net.kyori.adventure.text.Component component) {
+        ExtendedChatPlugin plugin = ExtendedChatPlugin.getInstance();
+        if (plugin == null) {
+            player.sendMessage(component);
+            return;
+        }
+        player.getScheduler().run(plugin, task -> player.sendMessage(component), null);
     }
 
     private boolean containsBlockedLink(String message) {

@@ -3,6 +3,7 @@ package me.mapacheee.extendedchat.service;
 import com.google.inject.Inject;
 import com.thewinterframework.configurate.Container;
 import com.thewinterframework.service.annotation.Service;
+import me.mapacheee.extendedchat.ExtendedChatPlugin;
 import me.mapacheee.extendedchat.color.ColorData;
 import me.mapacheee.extendedchat.color.ColorService;
 import me.mapacheee.extendedchat.config.EcConfig;
@@ -65,13 +66,13 @@ public final class PrivateMessageService {
 
         Player target = Bukkit.getPlayer(targetName);
         if (target == null) {
-            sender.sendMessage(MiniMessage.miniMessage().deserialize(
+            sendPlayerMessage(sender, MiniMessage.miniMessage().deserialize(
                     messages.get().prefix() + messages.get().msgPlayerNotFound()));
             return;
         }
 
         if (target.equals(sender)) {
-            sender.sendMessage(MiniMessage.miniMessage().deserialize(
+            sendPlayerMessage(sender, MiniMessage.miniMessage().deserialize(
                     messages.get().prefix() + messages.get().msgSelfMessage()));
             return;
         }
@@ -80,8 +81,8 @@ public final class PrivateMessageService {
 
         lastMessagedBy.put(target.getUniqueId(), sender.getUniqueId());
 
-        target.sendMessage(formatReceived(sender.getName(), plainMessage, target, senderColors));
-        sender.sendMessage(formatSent(target.getName(), plainMessage, sender));
+        sendPlayerMessage(target, formatReceived(sender.getName(), plainMessage, target, senderColors));
+        sendPlayerMessage(sender, formatSent(target.getName(), plainMessage, sender));
     }
 
     public void sendReply(Player sender, String message) {
@@ -90,19 +91,28 @@ public final class PrivateMessageService {
         }
         UUID lastUuid = lastMessagedBy.get(sender.getUniqueId());
         if (lastUuid == null) {
-            sender.sendMessage(MiniMessage.miniMessage().deserialize(
+            sendPlayerMessage(sender, MiniMessage.miniMessage().deserialize(
                     messages.get().prefix() + messages.get().msgNoReply()));
             return;
         }
 
         Player target = Bukkit.getPlayer(lastUuid);
         if (target == null || !target.isOnline()) {
-            sender.sendMessage(MiniMessage.miniMessage().deserialize(
+            sendPlayerMessage(sender, MiniMessage.miniMessage().deserialize(
                     messages.get().prefix() + messages.get().msgPlayerNotFound()));
             return;
         }
 
         sendPrivateMessage(sender, target.getName(), message);
+    }
+
+    private void sendPlayerMessage(Player player, Component component) {
+        ExtendedChatPlugin plugin = ExtendedChatPlugin.getInstance();
+        if (plugin == null) {
+            player.sendMessage(component);
+            return;
+        }
+        player.getScheduler().run(plugin, task -> player.sendMessage(component), null);
     }
 
     public UUID getLastMessagedBy(UUID uuid) {
@@ -145,3 +155,4 @@ public final class PrivateMessageService {
         return MiniMessage.miniMessage().deserialize(format, resolver);
     }
 }
+

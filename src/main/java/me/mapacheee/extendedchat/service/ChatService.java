@@ -3,6 +3,7 @@ package me.mapacheee.extendedchat.service;
 import com.google.inject.Inject;
 import com.thewinterframework.configurate.Container;
 import com.thewinterframework.service.annotation.Service;
+import me.mapacheee.extendedchat.ExtendedChatPlugin;
 import me.mapacheee.extendedchat.color.ColorData;
 import me.mapacheee.extendedchat.color.ColorService;
 import me.mapacheee.extendedchat.config.EcConfig;
@@ -17,6 +18,7 @@ import org.bukkit.entity.Player;
 import org.slf4j.Logger;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public final class ChatService {
@@ -71,7 +73,21 @@ public final class ChatService {
 
             if (papiEnabled && placeholderHook != null) {
                 try {
-                    format = placeholderHook.setPlaceholders(player, format);
+                    ExtendedChatPlugin plugin = ExtendedChatPlugin.getInstance();
+                    if (plugin != null) {
+                        String formatToResolve = format;
+                        CompletableFuture<String> future = new CompletableFuture<>();
+                        Bukkit.getGlobalRegionScheduler().execute(plugin, () -> {
+                            try {
+                                future.complete(placeholderHook.setPlaceholders(player, formatToResolve));
+                            } catch (Exception e) {
+                                future.complete(formatToResolve);
+                            }
+                        });
+                        format = future.join();
+                    } else {
+                        format = placeholderHook.setPlaceholders(player, format);
+                    }
                 } catch (Exception e) {
                     logger.warn("Failed to set placeholders for {}", player.getName(), e);
                 }
@@ -167,10 +183,14 @@ public final class ChatService {
         }
         Component finalFormatted = formatted.append(Component.text("\n"));
         try {
+            ExtendedChatPlugin plugin = ExtendedChatPlugin.getInstance();
+            if (plugin == null) {
+                return;
+            }
             Bukkit.getServer().getGlobalRegionScheduler().execute(
-                    Bukkit.getPluginManager().getPlugins()[0],
+                    plugin,
                     () -> Bukkit.getOnlinePlayers().forEach(player ->
-                            player.sendMessage(finalFormatted))
+                            player.getScheduler().run(plugin, task -> player.sendMessage(finalFormatted), null))
             );
         } catch (Exception e) {
             logger.error("Error broadcasting chat", e);

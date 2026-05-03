@@ -3,6 +3,7 @@ package me.mapacheee.extendedchat.service;
 import com.google.inject.Inject;
 import com.thewinterframework.configurate.Container;
 import com.thewinterframework.service.annotation.Service;
+import me.mapacheee.extendedchat.ExtendedChatPlugin;
 import me.mapacheee.extendedchat.color.ColorData;
 import me.mapacheee.extendedchat.color.ColorService;
 import me.mapacheee.extendedchat.config.EcConfig;
@@ -68,42 +69,51 @@ public final class StaffChatService {
     }
 
     public void sendStaffMessage(Player sender, String message) {
-        EcConfig cfg = config.get();
-        if (!cfg.staffChatEnabled()) {
+        ExtendedChatPlugin plugin = ExtendedChatPlugin.getInstance();
+        if (plugin == null) {
             return;
         }
 
-        if (!sender.hasPermission(cfg.staffChatPermission())) {
-            return;
-        }
-
-        String plainMessage = message;
-        if (!sender.hasPermission("extendedchat.color.ingame")) {
-            plainMessage = MiniMessage.miniMessage().escapeTags(plainMessage);
-        }
-
-        ColorData colorData = colorService.getColorData(sender);
-        String formattedName = colorData.applyNameColor(sender.getName());
-        String formattedMessage = colorData.applyMessageColor(plainMessage);
-
-        String format = cfg.staffChatFormat();
-
-        if (papiEnabled) {
-            format = placeholderHook.setPlaceholders(sender, format);
-        }
-
-        String translatedFormat = ColorData.translateLegacy(format);
-
-        String finalFormat = translatedFormat
-                .replace("<player_name>", formattedName)
-                .replace("<message>", formattedMessage);
-
-        Component formatted = MiniMessage.miniMessage().deserialize(finalFormat);
-
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.hasPermission(cfg.staffChatPermission())) {
-                player.sendMessage(formatted);
+        sender.getScheduler().run(plugin, task -> {
+            EcConfig cfg = config.get();
+            if (!cfg.staffChatEnabled()) {
+                return;
             }
-        }
+
+            if (!sender.hasPermission(cfg.staffChatPermission())) {
+                return;
+            }
+
+            String plainMessage = message;
+            if (!sender.hasPermission("extendedchat.color.ingame")) {
+                plainMessage = MiniMessage.miniMessage().escapeTags(plainMessage);
+            }
+
+            ColorData colorData = colorService.getColorData(sender);
+            String formattedName = colorData.applyNameColor(sender.getName());
+            String formattedMessage = colorData.applyMessageColor(plainMessage);
+
+            String format = cfg.staffChatFormat();
+
+            if (papiEnabled) {
+                format = placeholderHook.setPlaceholders(sender, format);
+            }
+
+            String translatedFormat = ColorData.translateLegacy(format);
+
+            String finalFormat = translatedFormat
+                    .replace("<player_name>", formattedName)
+                    .replace("<message>", formattedMessage);
+
+            Component formatted = MiniMessage.miniMessage().deserialize(finalFormat);
+
+            Bukkit.getGlobalRegionScheduler().execute(plugin, () -> {
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    if (player.hasPermission(cfg.staffChatPermission())) {
+                        player.getScheduler().run(plugin, t -> player.sendMessage(formatted), null);
+                    }
+                }
+            });
+        }, null);
     }
 }
