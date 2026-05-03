@@ -16,10 +16,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.slf4j.Logger;
 
+import java.util.List;
+
 @Service
 public final class ChatService {
 
-    private static final String DEFAULT_FORMAT = "<dark_gray>[<gray>ExtendedChat<dark_gray>] <white><player_name><dark_gray>» <white><message>";
+    private static final String DEFAULT_FORMAT = "<white><player_name><dark_gray>» <white><message>";
 
     private final Container<EcConfig> config;
     private final ColorService colorService;
@@ -49,7 +51,7 @@ public final class ChatService {
             }
 
             String plainMessage = PlainTextComponentSerializer.plainText().serialize(messageComponent);
-            if (plainMessage == null || plainMessage.isBlank()) {
+            if (plainMessage.isBlank()) {
                 logger.warn("Message is empty or null for player {}", player.getName());
                 return null;
             }
@@ -62,7 +64,10 @@ public final class ChatService {
             if (!cfg.chatFormatEnabled()) {
                 return null;
             }
-            String format = cfg.chatFormat() != null ? cfg.chatFormat() : DEFAULT_FORMAT;
+            String format = resolveChatFormat(player, cfg);
+            if (format == null || format.isBlank()) {
+                format = DEFAULT_FORMAT;
+            }
 
             if (papiEnabled && placeholderHook != null) {
                 try {
@@ -94,6 +99,54 @@ public final class ChatService {
             logger.debug("Stack trace:", e);
             return null;
         }
+    }
+
+    private String resolveChatFormat(Player player, EcConfig cfg) {
+        if (cfg == null || player == null) {
+            return DEFAULT_FORMAT;
+        }
+
+        if (!cfg.chatFormatsEnabled()) {
+            String fallback = cfg.chatFormat();
+            if (fallback == null || fallback.isBlank()) {
+                return DEFAULT_FORMAT;
+            }
+            return fallback;
+        }
+
+        List<EcConfig.ChatFormatEntry> entries = cfg.chatFormats();
+        String selected = null;
+        int bestWeight = Integer.MIN_VALUE;
+
+        if (entries != null) {
+            for (EcConfig.ChatFormatEntry entry : entries) {
+                if (entry == null) {
+                    continue;
+                }
+                String entryFormat = entry.format();
+                if (entryFormat == null || entryFormat.isBlank()) {
+                    continue;
+                }
+                String permission = entry.permission();
+                if (permission == null || permission.isBlank() || player.hasPermission(permission)) {
+                    int weight = entry.weight();
+                    if (weight > bestWeight) {
+                        bestWeight = weight;
+                        selected = entryFormat;
+                    }
+                }
+            }
+        }
+
+        if (selected != null) {
+            return selected;
+        }
+
+        String fallback = cfg.chatFormat();
+        if (fallback == null || fallback.isBlank()) {
+            return DEFAULT_FORMAT;
+        }
+        return fallback;
     }
 
     public void broadcastChat(Component formatted) {

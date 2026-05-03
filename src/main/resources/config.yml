@@ -10,9 +10,17 @@ command-tab-list:
 
 chat-format-enabled: true
 chat-format: "<white><player_name><dark_gray>» <white><message>"
+chat-formats-enabled: false
+chat-formats:
+  - permission: "extendedchat.format.vip"
+    weight: 100
+    format: "<gold>[VIP] <player_name><dark_gray>» <white><message>"
+  - permission: "extendedchat.format.member"
+    weight: 10
+    format: "<white><player_name><dark_gray>» <white><message>"
 
-staff-chat-format: "<red>[STAFF] <player_name> <dark_gray>» <white><message>"
 staff-chat-enabled: true
+staff-chat-format: "<red>[STAFF] <player_name> <dark_gray>» <white><message>"
 staff-chat-permission: "extendedchat.staff"
 
 private-messages-enabled: true

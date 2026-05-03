@@ -14,6 +14,8 @@ public record EcConfig(
         @Setting("command-tab-list") List<String> commandTabList,
         @Setting("chat-format-enabled") boolean chatFormatEnabled,
         @Setting("chat-format") String chatFormat,
+        @Setting("chat-formats-enabled") boolean chatFormatsEnabled,
+        @Setting("chat-formats") List<ChatFormatEntry> chatFormats,
         @Setting("staff-chat-format") String staffChatFormat,
         @Setting("staff-chat-enabled") boolean staffChatEnabled,
         @Setting("staff-chat-permission") String staffChatPermission,
@@ -38,6 +40,13 @@ public record EcConfig(
                 List.of("plugins", "pl", "bukkit:plugins", "bukkit:pl"),
                 true,
                 "<dark_gray>[<gray>ExtendedChat<dark_gray>] <white><player_name><dark_gray>» <white><message>",
+                true,
+                List.of(
+                        new ChatFormatEntry("extendedchat.format.vip", 100,
+                                "<gold>[VIP] <player_name><dark_gray>» <white><message>"),
+                        new ChatFormatEntry("extendedchat.format.member", 10,
+                                "<white><player_name><dark_gray>» <white><message>")
+                ),
                 "<red>[STAFF] <player_name> <dark_gray>» <white><message>",
                 true,
                 "extendedchat.staff",
@@ -58,5 +67,13 @@ public record EcConfig(
                 "<white>",
                 "<white>"
         );
+    }
+
+    @ConfigSerializable
+    public record ChatFormatEntry(
+            @Setting("permission") String permission,
+            @Setting("weight") int weight,
+            @Setting("format") String format
+    ) {
     }
 }
