@@ -5,6 +5,7 @@ import com.thewinterframework.service.annotation.Service;
 import com.thewinterframework.service.annotation.lifecycle.OnDisable;
 import com.thewinterframework.service.annotation.lifecycle.OnEnable;
 import me.mapacheee.extendedchat.ExtendedChatPlugin;
+import me.mapacheee.extendedchat.color.ColorData;
 import me.mapacheee.extendedchat.color.ColorService;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.entity.Player;
@@ -63,7 +64,11 @@ public final class PlaceholderHook {
             return text;
         }
         try {
-            return PlaceholderAPI.setPlaceholders(player, text);
+            String resolved = PlaceholderAPI.setPlaceholders(player, text);
+            resolved = ColorData.normalizeLegacyHex(resolved);
+            resolved = ColorData.normalizeLegacyCodes(resolved);
+            resolved = ColorData.normalizeSectionHex(resolved);
+            return ColorData.normalizeSectionCodes(resolved);
         } catch (Exception e) {
             logger.warn("Failed to set placeholders for {}", player.getName(), e);
             return text;
