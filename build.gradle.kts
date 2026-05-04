@@ -12,7 +12,7 @@ java {
 }
 
 group = "me.mapacheee"
-version = "1.0.0-SNAPSHOT"
+version = "1.0.1-SNAPSHOT"
 description = "ExtendedChat - Advanced chat plugin for modern Minecraft"
 
 repositories {
