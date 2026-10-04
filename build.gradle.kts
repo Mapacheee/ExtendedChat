@@ -25,8 +25,8 @@ repositories {
 }
 
 dependencies {
-    compileOnlyApi("me.mapacheee:MapacheeeLib:1.0.0")
-    annotationProcessor("me.mapacheee:MapacheeeLib:1.0.0")
+    compileOnlyApi("me.mapacheee:MapacheeeLib:1.0.2")
+    annotationProcessor("me.mapacheee:MapacheeeLib:1.0.2")
     annotationProcessor("com.thewinterframework:paper:1.0.6")
     annotationProcessor("com.thewinterframework:command:1.0.1")
     annotationProcessor("com.thewinterframework:configuration:1.0.4")
@@ -38,7 +38,7 @@ dependencies {
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
-    options.release = 21
+    options.release = 25
 }
 
 tasks {
