@@ -2,17 +2,17 @@ package me.mapacheee.extendedchat.color;
 
 import com.google.inject.Inject;
 import com.thewinterframework.configurate.Container;
+import com.thewinterframework.plugin.DataFolder;
 import com.thewinterframework.service.annotation.Service;
 import com.thewinterframework.service.annotation.lifecycle.OnDisable;
 import com.thewinterframework.service.annotation.lifecycle.OnEnable;
-import me.mapacheee.extendedchat.ExtendedChatPlugin;
 import me.mapacheee.extendedchat.config.EcConfig;
 import org.bukkit.entity.Player;
 import org.slf4j.Logger;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,18 +38,10 @@ public final class ColorService {
     }
 
     @OnEnable
-    public void onEnable() {
-        if (!config.get().colorEnabled()) {
-            return;
-        }
-
-        ExtendedChatPlugin plugin = ExtendedChatPlugin.getInstance();
-        if (plugin == null) {
-            return;
-        }
-
-        colorDataFile = new File(plugin.getDataFolder(), "colors.yml");
+    public synchronized void onEnable(@DataFolder Path dataFolder) {
+        colorDataFile = dataFolder.resolve("colors.yml").toFile();
         try {
+            Files.createDirectories(dataFolder);
             if (!colorDataFile.exists()) {
                 colorDataFile.createNewFile();
             }
@@ -64,8 +56,10 @@ public final class ColorService {
     }
 
     @OnDisable
-    public void onDisable() {
+    public synchronized void onDisable() {
         saveAllColors();
+        pendingInputs.clear();
+        colorCache.clear();
     }
 
     private void loadAllColors() {
@@ -87,7 +81,7 @@ public final class ColorService {
         }
     }
 
-    public void saveAllColors() {
+    public synchronized void saveAllColors() {
         if (colorNode == null || colorCache.isEmpty()) {
             return;
         }
@@ -109,30 +103,13 @@ public final class ColorService {
             return new ColorData();
         }
         UUID uuid = player.getUniqueId();
-        return colorCache.computeIfAbsent(uuid, key -> {
-            loadPlayerColor(uuid);
-            return colorCache.getOrDefault(uuid, new ColorData());
-        });
+        // Stored colors are loaded once on enable. Never mutate the cache from
+        // inside computeIfAbsent, which ConcurrentHashMap rejects recursively.
+        return colorCache.computeIfAbsent(uuid, key ->
+                new ColorData(config.get().defaultNameColor(), config.get().defaultMessageColor()));
     }
 
-    private void loadPlayerColor(UUID uuid) {
-        if (colorNode == null) {
-            return;
-        }
-        try {
-            ConfigurationNode playerNode = colorNode.node(uuid.toString());
-            if (playerNode.virtual()) {
-                return;
-            }
-            String nameColor = playerNode.node("nameColor").getString("<white>");
-            String messageColor = playerNode.node("messageColor").getString("<white>");
-            colorCache.put(uuid, new ColorData(nameColor, messageColor));
-        } catch (Exception e) {
-            logger.error("Failed to load color for {}", uuid, e);
-        }
-    }
-
-    public void saveColorData(Player player, ColorData data) {
+    public synchronized void saveColorData(Player player, ColorData data) {
         if (!config.get().colorEnabled()) {
             return;
         }
@@ -162,7 +139,7 @@ public final class ColorService {
         saveColorData(player, data);
     }
 
-    public void clearColors(Player player) {
+    public synchronized void clearColors(Player player) {
         colorCache.remove(player.getUniqueId());
         if (colorNode != null) {
             try {
@@ -176,6 +153,10 @@ public final class ColorService {
 
     public boolean hasPendingInput(UUID uuid) {
         return pendingInputs.containsKey(uuid);
+    }
+
+    public boolean isEnabled() {
+        return config.get().colorEnabled();
     }
 
     public ColorInputSession getPendingInput(UUID uuid) {

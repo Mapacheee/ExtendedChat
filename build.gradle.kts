@@ -7,7 +7,7 @@ plugins {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
 
@@ -22,18 +22,33 @@ repositories {
     maven("https://oss.sonatype.org/content/repositories/snapshots/")
     maven("https://jitpack.io")
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
+    maven("https://repo.faststats.dev/releases") {
+        content { includeGroup("dev.faststats.metrics") }
+    }
 }
 
 dependencies {
     compileOnlyApi("me.mapacheee:MapacheeeLib:1.0.2")
-    annotationProcessor("me.mapacheee:MapacheeeLib:1.0.2")
-    annotationProcessor("com.thewinterframework:paper:1.0.6")
-    annotationProcessor("com.thewinterframework:command:1.0.1")
-    annotationProcessor("com.thewinterframework:configuration:1.0.4")
+    annotationProcessor("com.thewinterframework:paper:2.1.5")
+    annotationProcessor("com.thewinterframework:command:2.0.0")
+    annotationProcessor("com.thewinterframework:configuration:2.0.2")
+    compileOnly("org.spongepowered:configurate-core:4.2.0")
+    compileOnly("org.spongepowered:configurate-yaml:4.2.0")
 
     paperweight.paperDevBundle("1.21.8-R0.1-SNAPSHOT")
 
     compileOnly("me.clip:placeholderapi:2.12.2")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("me.mapacheee:MapacheeeLib:1.0.2")
+    testImplementation("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
+}
+
+tasks.test {
+    useJUnitPlatform()
+    workingDir = layout.buildDirectory.dir("test-work").get().asFile
+    doFirst { workingDir.mkdirs() }
 }
 
 tasks.withType<JavaCompile> {
@@ -42,6 +57,9 @@ tasks.withType<JavaCompile> {
 }
 
 tasks {
+    jar {
+        archiveClassifier.set("plain")
+    }
     processResources {
         filesMatching("paper-plugin.yml") {
             expand(mapOf("version" to project.version, "description" to project.description))

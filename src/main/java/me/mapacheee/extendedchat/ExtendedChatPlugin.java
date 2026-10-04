@@ -1,10 +1,7 @@
 package me.mapacheee.extendedchat;
 
-import com.google.inject.Binder;
-import com.google.inject.Scopes;
 import com.thewinterframework.paper.PaperWinterPlugin;
 import com.thewinterframework.plugin.WinterBootPlugin;
-import com.thewinterframework.service.annotation.Service;
 
 @WinterBootPlugin
 public final class ExtendedChatPlugin extends PaperWinterPlugin {
@@ -18,7 +15,7 @@ public final class ExtendedChatPlugin extends PaperWinterPlugin {
 
     public static <T> T getService(Class<T> type) {
         ExtendedChatPlugin current = instance;
-        if (current == null || loading) {
+        if (current == null || loading || current.getInjector() == null) {
             throw new IllegalStateException("ExtendedChat plugin is not loaded yet");
         }
         return current.getInjector().getInstance(type);
@@ -41,8 +38,4 @@ public final class ExtendedChatPlugin extends PaperWinterPlugin {
         super.onPluginDisable();
     }
 
-    @Override
-    public void configure(Binder binder) {
-        binder.bindScope(Service.class, Scopes.SINGLETON);
-    }
 }

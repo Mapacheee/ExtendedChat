@@ -10,9 +10,9 @@ import java.util.regex.Pattern;
 
 public class ColorData {
 
-    private String nameColor;
-    private String messageColor;
-    private List<String> gradientColors;
+    private volatile String nameColor;
+    private volatile String messageColor;
+    private volatile List<String> gradientColors;
 
     private static final Pattern LEGACY_HEX_PATTERN = Pattern.compile("(?i)&#([0-9a-f]{6})");
     private static final Pattern LEGACY_CODE_PATTERN = Pattern.compile("(?i)&([0-9a-fk-or])");

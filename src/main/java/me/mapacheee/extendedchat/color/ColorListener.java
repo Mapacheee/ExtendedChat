@@ -147,7 +147,7 @@ public final class ColorListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onChatInput(AsyncChatEvent event) {
         if (!config.get().colorEnabled()) {
             return;
@@ -156,9 +156,9 @@ public final class ColorListener implements Listener {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
 
-        if (colorService.hasPendingInput(uuid)) {
+        ColorService.ColorInputSession session = colorService.getPendingInput(uuid);
+        if (session != null) {
             event.setCancelled(true);
-            ColorService.ColorInputSession session = colorService.getPendingInput(uuid);
             String input = PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
 
             ExtendedChatPlugin plugin = ExtendedChatPlugin.getInstance();
@@ -173,6 +173,9 @@ public final class ColorListener implements Listener {
     private void handleColorInput(Player player, ColorService.ColorInputSession session, String input) {
         EcMessages msgs = messages.get();
         UUID uuid = player.getUniqueId();
+        if (colorService.getPendingInput(uuid) != session) {
+            return;
+        }
 
         if (session.inputType() == ColorService.InputType.GRADIENT && !config.get().colorGradientsEnabled()) {
             colorService.removePendingInput(uuid);

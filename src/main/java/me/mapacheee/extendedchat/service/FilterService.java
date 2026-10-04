@@ -3,6 +3,9 @@ package me.mapacheee.extendedchat.service;
 import com.google.inject.Inject;
 import com.thewinterframework.configurate.Container;
 import com.thewinterframework.service.annotation.Service;
+import com.thewinterframework.service.annotation.lifecycle.OnDisable;
+import com.thewinterframework.service.annotation.lifecycle.OnEnable;
+import com.thewinterframework.service.annotation.lifecycle.OnReload;
 import me.mapacheee.extendedchat.ExtendedChatPlugin;
 import me.mapacheee.extendedchat.config.EcConfig;
 import me.mapacheee.extendedchat.config.EcMessages;
@@ -25,14 +28,13 @@ public final class FilterService {
     private final Container<EcMessages> messages;
     private final Logger logger;
     private final Map<UUID, Long> cooldowns = new ConcurrentHashMap<>();
-    private final List<Pattern> antiLinkPatterns = new ArrayList<>();
+    private volatile CompiledFilters compiledFilters;
 
     @Inject
     public FilterService(Container<EcConfig> config, Container<EcMessages> messages, Logger logger) {
         this.config = config;
         this.messages = messages;
         this.logger = logger;
-        updatePatterns();
     }
 
     public boolean canSendMessage(Player player, String message) {
@@ -58,7 +60,7 @@ public final class FilterService {
         }
 
         if (cfg.antiLinkEnabled() && !player.hasPermission("extendedchat.antilink.bypass")) {
-            if (containsBlockedLink(message)) {
+            if (containsBlockedLink(message, cfg)) {
                 sendPlayerMessage(player, MiniMessage.miniMessage().deserialize(
                         messages.get().prefix() + messages.get().antiLinkMessage()));
                 return false;
@@ -77,16 +79,19 @@ public final class FilterService {
         player.getScheduler().run(plugin, task -> player.sendMessage(component), null);
     }
 
-    private boolean containsBlockedLink(String message) {
-        if (antiLinkPatterns.isEmpty()) {
-            updatePatterns();
+    private boolean containsBlockedLink(String message, EcConfig cfg) {
+        // Configuration reload hooks need not run after generated container callbacks.
+        // Check the snapshot too, so the first message always sees the new patterns.
+        CompiledFilters filters = compiledFilters;
+        if (filters == null || filters.config() != cfg) {
+            filters = compilePatterns(cfg);
+            compiledFilters = filters;
         }
-
-        for (Pattern pattern : antiLinkPatterns) {
+        for (Pattern pattern : filters.patterns()) {
             Matcher matcher = pattern.matcher(message);
             while (matcher.find()) {
                 String link = matcher.group();
-                if (!isWhitelisted(link)) {
+                if (!isWhitelisted(link, cfg)) {
                     return true;
                 }
             }
@@ -94,9 +99,12 @@ public final class FilterService {
         return false;
     }
 
-    private boolean isWhitelisted(String link) {
+    private boolean isWhitelisted(String link, EcConfig cfg) {
         String lowerLink = link.toLowerCase();
-        for (String whitelisted : config.get().antiLinkWhitelist()) {
+        if (cfg.antiLinkWhitelist() == null) {
+            return false;
+        }
+        for (String whitelisted : cfg.antiLinkWhitelist()) {
             if (lowerLink.contains(whitelisted.toLowerCase())) {
                 return true;
             }
@@ -104,18 +112,36 @@ public final class FilterService {
         return false;
     }
 
+    @OnEnable
+    @OnReload
     public void updatePatterns() {
-        antiLinkPatterns.clear();
-        EcConfig cfg = config.get();
+        compiledFilters = compilePatterns(config.get());
+    }
+
+    private CompiledFilters compilePatterns(EcConfig cfg) {
+        List<Pattern> patterns = new ArrayList<>();
         if (cfg.antiLinkRegexList() == null) {
-            return;
+            return new CompiledFilters(cfg, List.of());
         }
         for (String regex : cfg.antiLinkRegexList()) {
             try {
-                antiLinkPatterns.add(Pattern.compile(regex, Pattern.CASE_INSENSITIVE));
+                patterns.add(Pattern.compile(regex, Pattern.CASE_INSENSITIVE));
             } catch (Exception e) {
                 logger.error("Invalid regex pattern: {}", regex, e);
             }
         }
+        return new CompiledFilters(cfg, List.copyOf(patterns));
     }
+
+    public void removePlayer(UUID uuid) {
+        cooldowns.remove(uuid);
+    }
+
+    @OnDisable
+    public void onDisable() {
+        cooldowns.clear();
+        compiledFilters = null;
+    }
+
+    private record CompiledFilters(EcConfig config, List<Pattern> patterns) {}
 }

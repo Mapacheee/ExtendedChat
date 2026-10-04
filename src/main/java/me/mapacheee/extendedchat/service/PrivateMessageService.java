@@ -30,7 +30,6 @@ public final class PrivateMessageService {
     private final FilterService filterService;
     private final PlaceholderHook placeholderHook;
     private final Logger logger;
-    private final boolean papiEnabled;
     private final Map<UUID, UUID> lastMessagedBy = new ConcurrentHashMap<>();
 
     @Inject
@@ -48,7 +47,6 @@ public final class PrivateMessageService {
         this.filterService = filterService;
         this.placeholderHook = placeholderHook;
         this.logger = logger;
-        this.papiEnabled = placeholderHook.isEnabled();
     }
 
     public void sendPrivateMessage(Player sender, String targetName, String message) {
@@ -81,7 +79,13 @@ public final class PrivateMessageService {
 
         lastMessagedBy.put(target.getUniqueId(), sender.getUniqueId());
 
-        sendPlayerMessage(target, formatReceived(sender.getName(), plainMessage, target, senderColors));
+        String senderName = sender.getName();
+        String receivedMessage = plainMessage;
+        ExtendedChatPlugin plugin = ExtendedChatPlugin.getInstance();
+        if (plugin != null) {
+            target.getScheduler().run(plugin, task -> target.sendMessage(
+                    formatReceived(senderName, receivedMessage, target, senderColors)), null);
+        }
         sendPlayerMessage(sender, formatSent(target.getName(), plainMessage, sender));
     }
 
@@ -126,7 +130,7 @@ public final class PrivateMessageService {
         Component targetComponent = MiniMessage.miniMessage().deserialize(targetName);
 
         String format = config.get().privateMsgSentFormat();
-        if (papiEnabled) {
+        if (placeholderHook.isEnabled()) {
             format = placeholderHook.setPlaceholders(sender, format);
         }
 
@@ -144,7 +148,7 @@ public final class PrivateMessageService {
                 senderColors.applyMessageColor(message));
 
         String format = config.get().privateMsgReceivedFormat();
-        if (papiEnabled) {
+        if (placeholderHook.isEnabled()) {
             format = placeholderHook.setPlaceholders(target, format);
         }
 

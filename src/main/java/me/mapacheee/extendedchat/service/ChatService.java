@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public final class ChatService {
@@ -29,7 +30,6 @@ public final class ChatService {
     private final ColorService colorService;
     private final PlaceholderHook placeholderHook;
     private final Logger logger;
-    private final boolean papiEnabled;
 
     @Inject
     public ChatService(
@@ -42,7 +42,6 @@ public final class ChatService {
         this.colorService = colorService;
         this.placeholderHook = placeholderHook;
         this.logger = logger;
-        this.papiEnabled = placeholderHook.isEnabled();
     }
 
     public Component buildChatComponent(Player player, Component messageComponent) {
@@ -71,23 +70,27 @@ public final class ChatService {
                 format = DEFAULT_FORMAT;
             }
 
-            if (papiEnabled && placeholderHook != null) {
+            if (placeholderHook.isEnabled()) {
                 try {
                     ExtendedChatPlugin plugin = ExtendedChatPlugin.getInstance();
-                    if (plugin != null) {
+                    if (Bukkit.isOwnedByCurrentRegion(player)) {
+                        format = placeholderHook.setPlaceholders(player, format);
+                    } else if (plugin != null) {
                         String formatToResolve = format;
                         CompletableFuture<String> future = new CompletableFuture<>();
-                        Bukkit.getGlobalRegionScheduler().execute(plugin, () -> {
+                        boolean scheduled = player.getScheduler().execute(plugin, () -> {
                             try {
                                 future.complete(placeholderHook.setPlaceholders(player, formatToResolve));
                             } catch (Exception e) {
                                 future.complete(formatToResolve);
                             }
-                        });
-                        format = future.join();
-                    } else {
-                        format = placeholderHook.setPlaceholders(player, format);
+                        }, () -> future.complete(formatToResolve), 1L);
+                        if (scheduled) {
+                            format = future.get(2, TimeUnit.SECONDS);
+                        }
                     }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 } catch (Exception e) {
                     logger.warn("Failed to set placeholders for {}", player.getName(), e);
                 }

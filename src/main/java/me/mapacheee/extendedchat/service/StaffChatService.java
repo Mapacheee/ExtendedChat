@@ -26,7 +26,6 @@ public final class StaffChatService {
     private final PlaceholderHook placeholderHook;
     private final Logger logger;
     private final Set<UUID> toggledPlayers = ConcurrentHashMap.newKeySet();
-    private final boolean papiEnabled;
 
     @Inject
     public StaffChatService(
@@ -39,7 +38,6 @@ public final class StaffChatService {
         this.colorService = colorService;
         this.placeholderHook = placeholderHook;
         this.logger = logger;
-        this.papiEnabled = placeholderHook.isEnabled();
     }
 
     public boolean isEnabled() {
@@ -95,7 +93,7 @@ public final class StaffChatService {
 
             String format = cfg.staffChatFormat();
 
-            if (papiEnabled) {
+            if (placeholderHook.isEnabled()) {
                 format = placeholderHook.setPlaceholders(sender, format);
             }
 
@@ -109,9 +107,11 @@ public final class StaffChatService {
 
             Bukkit.getGlobalRegionScheduler().execute(plugin, () -> {
                 for (Player player : Bukkit.getOnlinePlayers()) {
-                    if (player.hasPermission(cfg.staffChatPermission())) {
-                        player.getScheduler().run(plugin, t -> player.sendMessage(formatted), null);
-                    }
+                    player.getScheduler().run(plugin, t -> {
+                        if (player.hasPermission(cfg.staffChatPermission())) {
+                            player.sendMessage(formatted);
+                        }
+                    }, null);
                 }
             });
         }, null);
